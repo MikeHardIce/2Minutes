@@ -1,1 +1,2 @@
-# 2Minutes
+# two-minutes
+

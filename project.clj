@@ -6,9 +6,9 @@
             :url "none"
             :year 2021
             :key "mit"}
-  :dependencies [[org.clojure/clojure "1.10.3"]
-                 [strigui "0.0.1-alpha20"]
-                 [org.clojure/core.async "1.4.627"]]
+  :dependencies [[org.clojure/clojure "1.11.1"]
+                 [strigui "0.0.1-alpha30"]
+                 [org.clojure/core.async "1.5.648"]]
   :main ^:skip-aot two-minutes.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

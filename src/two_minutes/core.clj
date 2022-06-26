@@ -4,12 +4,14 @@
             [two-minutes.game :as game])
   (:gen-class))
 
-(defn create-back-button
-  ([group back-handler] (create-back-button group back-handler 550))
-  ([group back-handler y]
-  (gui/button! "back" "Nope" {:x 100 :y y :width 200 :color [:white :black] :can-tab? true :group group})
-  (gui/update! "back" [:events :mouse-clicked] (fn [_]
-                                                 (back-handler #(gui/remove-group! group))))))
+(defn create-back-button 
+  [widgets group fn-back]
+  (-> widgets
+      (gui/add-button "back" "Back" {:x 500 :y 500 :width 350 :color [:white :black] :can-tab? true :group group})
+      (gui/attach-event "back" :mouse-clicked (fn [wdgs _]
+                                                (-> wdgs
+                                                    (gui/remove-widget-group group)
+                                                    (fn-back wdgs))))))
 
 (defn update-avion!
   [avion-name height]
@@ -56,8 +58,13 @@
                  (if (= seconds 0) 59 (dec seconds))))))))
 
 (defn difficulties
-  [clear-screen back]
-  (clear-screen)
+  [widgets fn-back]
+  (-> widgets
+      (gui/add-button "easy" "I just woke up" {:x 375 :y 200 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
+      (gui/add-button "medium" "I had my coffee" {:x 375 :y 275 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
+      (gui/add-button "hard" "I can move mountains!!" {:x 375 :y 350 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
+      (create-back-button "difficulties" fn-back))
+  
   (letfn [(create-game-screen-link [widget-name difficulty]
             (gui/update! widget-name [:events :mouse-clicked] (fn [_] (game-screen #(gui/remove-group! "difficulties") back difficulty))))]
     (gui/button! "easy" "I just woke up" {:x 375 :y 200 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
@@ -71,16 +78,28 @@
     (create-back-button "difficulties" back)))
   
 (defn info 
-  [clear-screen back]
-  (clear-screen)
-  (gui/label! "info" "Once upon a time 
+  [widgets fn-back]
+  (-> widgets
+      (gui/add-label "info" "Once upon a time 
                       in a far far universe ..." {:x 375 :y 200 :width 500 :font-size 20 :font-style [:bold] :group "info"})
-  
-  (create-back-button "info" back))
+      (create-back-button "info" fn-back)))
 
 (defn main-menu
-  [clear-screen]
-  (clear-screen)
+  [widgets]
+  (-> widgets
+      (gui/add-button "start" "Engine start!" {:x 100 :y 200 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
+      (gui/add-button "info" "What is this?" {:x 100 :y 275 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
+      (gui/add-button "exit" "I don't want anymore ..." {:x 100 :y 350 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
+      (gui/attach-event "exit" :mouse-clicked (fn [_ _] (gui/close-window!)))
+      (gui/attach-event "info" :mouse-clicked (fn [wdgs _] 
+                                                (-> wdgs 
+                                                    (gui/remove-widget-group "main-menu")
+                                                    (info main-menu))))
+      (gui/attach-event "start" :mouse-clicked (fn [wdgs _]
+                                                 (-> wdgs
+                                                     (gui/remove-widget-group "main-menu")
+                                                     (difficulties main-menu)))))
+
   (gui/button! "start" "Engine start!" {:x 100 :y 200 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
   (gui/button! "info" "What is this?" {:x 100 :y 275 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
   (gui/button! "exit" "I don't want anymore ..." {:x 100 :y 350 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})

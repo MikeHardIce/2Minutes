@@ -110,5 +110,5 @@
 (defn -main
   ""
   [& args]
-  (gui/window! 1000 1000 "2Minutes")
+  (gui/window! 0 0 1000 1000 "2Minutes")
   (main-menu (fn [])))

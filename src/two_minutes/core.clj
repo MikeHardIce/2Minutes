@@ -13,49 +13,43 @@
                                                     (gui/remove-widget-group group)
                                                     (fn-back wdgs))))))
 
-(defn update-avion!
-  [avion-name height]
-  (when-let [avion (gui/find-by-name "avion")]
-    (when (not= (-> avion :y) height)
-      (gui/update! avion-name [:args :y] height))))
-
 (defn game-screen
-  [clear-screen back difficulty]
-  (clear-screen)
+  [widgets fn-back difficulty]
   (let [current-exercise (atom (game/generate-exercise difficulty))
-        height (atom 300)]
-    (gui/label! "timer" "2:00" {:x 800 :y 50 :width 200 :font-size 24 :font-style [:bold] :group "game-screen"})
-    (gui/button! "avion" "(  0^0)" {:x 50 :y @height :width 50 :height 25 :color [:red :white] :group "game-screen"})
-    (gui/label! "exercise" (:representation @current-exercise) {:x 375 :y 50 :width 300 :font-size 24 :font-style [:bold] :group "game-screen"})
-    (gui/input! "result" "" {:x 375 :y 800 :width 300 :color [:white :black] :selected? true :font-size 16 :group "game-screen"})
-    (create-back-button "game-screen" back 900)
-    (gui/update! "result" [:events :key-pressed] (fn [wdg key-code]
-                                                   (when (= key-code :enter)
-                                                     (try
-                                                       (let [result (-> wdg :value Integer/parseInt)
-                                                             new-height (if (= result (:result @current-exercise))
-                                                                          (do
-                                                                            (reset! current-exercise (game/generate-exercise difficulty))
-                                                                            (gui/update! "exercise" :value (:representation @current-exercise))
-                                                                            (swap! height - 5))
-                                                                          (swap! height + 5))]
-                                                         (update-avion! "avion" new-height)
-                                                         (gui/update! "result" :value ""))
-                                                       (catch Exception e
-                                                         (println (.getMessage e)))))))
-    
+        height 300
+        widgets (-> widgets
+                    (gui/add-label "timer" "2:00" {:x 800 :y 50 :width 200 :font-size 24 :font-style [:bold] :group "game-screen"})
+                    (gui/add-button "avion" "(  0^0)" {:x 50 :y height :width 50 :height 25 :color [:red :white] :group "game-screen"})
+                    (gui/add-label "exercise" (:representation @current-exercise) {:x 375 :y 50 :width 300 :font-size 24 :font-style [:bold] :group "game-screen"})
+                    (gui/add-input "result" "" {:x 375 :y 800 :width 300 :color [:white :black] :selected? true :font-size 16 :group "game-screen"})
+                    (create-back-button "game-screen" fn-back)
+                    (gui/attach-event "result" :key-pressed (fn [wdgs wdg key-code]
+                                                              (if (not= key-code 10)
+                                                                wdgs
+                                                                (let [result (-> wdg :value Integer/parseInt)
+                                                                      [diff-height new-exercise] (if (= result (:result @current-exercise))
+                                                                                                   [5 (reset! current-exercise (game/generate-exercise difficulty))]
+                                                                                                   [-5 @current-exercise])]
+                                                                  (-> wdgs
+                                                                      (update-in ["avion" :args :y] (partial inc diff-height))
+                                                                      (update-in ["exercise" :value] :representation new-exercise)
+                                                                      (assoc-in ["result" :value] "")))))))]
     (go-loop [minutes 2
               seconds 0]
       (<! (timeout 1000))
-      (gui/update! "timer" :value (str (format "%2d" minutes)
-                                       ":"
-                                       (format "%02d" seconds)))
-      (when (update-avion! "avion" (swap! height + 4))
-        (when (and (= minutes 0) (= seconds 30))
-          (gui/update! "timer" [:args :color] [:red]))
-        (when (> (+ minutes seconds) 0)
-          (recur (if (= seconds 0) (dec minutes) minutes)
-                 (if (= seconds 0) 59 (dec seconds))))))))
+      (gui/swap-widgets! (fn [wdgs]
+                           (-> wdgs 
+                               (assoc-in ["timer" :value] (str (format "%2d" minutes)
+                                                               ":"
+                                                               (format "%02d" seconds)))
+                               (assoc-in ["timer" :args :color] (if (and (= minutes 0) (= seconds 30))
+                                                                  [:red]
+                                                                  [:black]))
+                               (update-in ["avion" :args :y] (partial + 4)))))
+      (when (> (+ minutes seconds) 0)
+        (recur (if (= seconds 0) (dec minutes) minutes)
+               (if (= seconds 0) 59 (dec seconds)))))
+    widgets))
 
 (defn difficulties
   [widgets fn-back]
@@ -63,7 +57,8 @@
       (gui/add-button "easy" "I just woke up" {:x 375 :y 200 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
       (gui/add-button "medium" "I had my coffee" {:x 375 :y 275 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
       (gui/add-button "hard" "I can move mountains!!" {:x 375 :y 350 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
-      (create-back-button "difficulties" fn-back))
+      (create-back-button "difficulties" fn-back)
+      )
   
   (letfn [(create-game-screen-link [widget-name difficulty]
             (gui/update! widget-name [:events :mouse-clicked] (fn [_] (game-screen #(gui/remove-group! "difficulties") back difficulty))))]

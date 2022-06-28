@@ -11,7 +11,7 @@
       (gui/attach-event "back" :mouse-clicked (fn [wdgs _]
                                                 (-> wdgs
                                                     (gui/remove-widget-group group)
-                                                    (fn-back wdgs))))))
+                                                    fn-back)))))
 
 (defn game-screen
   [widgets fn-back difficulty]
@@ -57,20 +57,19 @@
       (gui/add-button "easy" "I just woke up" {:x 375 :y 200 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
       (gui/add-button "medium" "I had my coffee" {:x 375 :y 275 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
       (gui/add-button "hard" "I can move mountains!!" {:x 375 :y 350 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
-      (create-back-button "difficulties" fn-back)
-      )
-  
-  (letfn [(create-game-screen-link [widget-name difficulty]
-            (gui/update! widget-name [:events :mouse-clicked] (fn [_] (game-screen #(gui/remove-group! "difficulties") back difficulty))))]
-    (gui/button! "easy" "I just woke up" {:x 375 :y 200 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
-    (gui/button! "medium" "I had my coffee" {:x 375 :y 275 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
-    (gui/button! "hard" "I can move mountains!!" {:x 375 :y 350 :width 300 :color [:white :black] :can-tab? true :group "difficulties"})
-
-    (create-game-screen-link "easy" 1)
-    (create-game-screen-link "medium" 2)
-    (create-game-screen-link "hard" 3)
-
-    (create-back-button "difficulties" back)))
+      (gui/attach-event "easy" :mouse-clicked (fn [wdgs _]
+                                                (-> wdgs 
+                                                    (gui/remove-widget-group "difficulties")
+                                                    (game-screen #(difficulties % fn-back) 1))))
+      (gui/attach-event "medium" :mouse-clicked (fn [wdgs _]
+                                                (-> wdgs
+                                                    (gui/remove-widget-group "difficulties")
+                                                    (game-screen #(difficulties % fn-back) 2))))
+      (gui/attach-event "hard" :mouse-clicked (fn [wdgs _]
+                                                (-> wdgs
+                                                    (gui/remove-widget-group "difficulties")
+                                                    (game-screen #(difficulties % fn-back) 3))))
+      (create-back-button "difficulties" fn-back)))
   
 (defn info 
   [widgets fn-back]
@@ -93,22 +92,10 @@
       (gui/attach-event "start" :mouse-clicked (fn [wdgs _]
                                                  (-> wdgs
                                                      (gui/remove-widget-group "main-menu")
-                                                     (difficulties main-menu)))))
-
-  (gui/button! "start" "Engine start!" {:x 100 :y 200 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
-  (gui/button! "info" "What is this?" {:x 100 :y 275 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
-  (gui/button! "exit" "I don't want anymore ..." {:x 100 :y 350 :width 350 :color [:white :black] :can-tab? true :group "main-menu"})
-
-  (gui/update! "exit" [:events :mouse-clicked] (fn [_] (gui/close-window)))
-  
-  (gui/update! "info" [:events :mouse-clicked] (fn [_]
-                                                  (info #(gui/remove-group! "main-menu") main-menu)))
-
-  (gui/update! "start" [:events :mouse-clicked] (fn [_]
-                                                  (difficulties #(gui/remove-group! "main-menu") main-menu))))
+                                                     (difficulties main-menu))))))
 
 (defn -main
   ""
   [& args]
   (gui/window! 0 0 1000 1000 "2Minutes")
-  (main-menu (fn [])))
+  (gui/swap-widgets! main-menu))

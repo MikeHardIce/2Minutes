@@ -7,9 +7,12 @@
             :year 2021
             :key "mit"}
   :dependencies [[org.clojure/clojure "1.11.1"]
-                 [strigui "0.0.1-alpha30"]
+                 [strigui "0.0.1-alpha31"]
+                 [com.github.mikehardice/capra "0.0.3"]
                  [org.clojure/core.async "1.5.648"]]
-  :main ^:skip-aot two-minutes.core
+  ;;:resource-paths ["resources/strigui-0.0.1-alpha30.jar"]
+  :main two-minutes.core
+  :aot [two-minutes.core]
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})

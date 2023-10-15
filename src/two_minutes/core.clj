@@ -54,7 +54,6 @@
       (<! (timeout 1000))
       (when (not @canceled)
         (gui/swap-widgets! (fn [wdgs]
-                             (println " Excercise" {:result (-> wdgs (get "exercise") :props :result) :representation (-> wdgs (get "exercise") :value)})
                              (-> wdgs
                                  (assoc-in ["timer" :value] (str (format "%2d" minutes)
                                                                  ":"

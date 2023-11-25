@@ -106,7 +106,6 @@
       (gui/add-button "main-window" "exit" "I don't want anymore ..." {:x 375 :y 350  :width 350 :color color :can-tab? true :group "main"})
       (gui/attach-event "exit" :mouse-clicked (fn [wdgs _] (gui/close-window! wdgs "main-window")))
       (gui/attach-event "info" :mouse-clicked (fn [wdgs _] 
-                                                (println "Bla")
                                                 (-> wdgs 
                                                     (gui/remove-widgets-by-group "main")
                                                     (info-view main-menu))))

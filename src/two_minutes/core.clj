@@ -19,6 +19,12 @@
                                                      (gui/remove-widgets-by-group group)
                                                      fn-back))))))
 
+(defn ending-screen
+  [widgets message]
+  (-> widgets
+      (gui/add-label "main-window" "text-end-bg" message {:x 300 :y 400 :widget 500 :font-size 128 :border 1 :color (merge color {:text Color/red}) :group "game-screen"})
+      (gui/add-label "main-window" "text-end-fg" message {:x 305 :y 403 :widget 500 :font-size 128 :border 1 :color (merge color {:text Color/white}) :group "game-screen"})))
+
 (defn game-screen
   [widgets fn-back difficulty]
   (let [{:keys [result representation]} (game/generate-exercise difficulty)
@@ -29,11 +35,11 @@
                     (gui/add-button "main-window" "avion" "( = 0^0)" {:x 50 :y height  :width 50 :height 25 :color {:background Color/green :text Color/white} :group "game-screen"})
                     (gui/add-label "main-window" "exercise" representation {:x 375 :y 200  :width 300 :font-size 24 :font-style [:bold] :color {:text Color/black} :group "game-screen" :result result})
                     (gui/add-input "main-window" "result" "" {:x 375 :y 800  :width 300 :color color :selected? true :can-tab? true :font-size 16 :group "game-screen"})
-                    (create-back-button "game-screen" (fn [wdgs] 
+                    (create-back-button "game-screen" (fn [wdgs]
                                                         (reset! canceled true)
                                                         (fn-back wdgs)) 900)
                     (gui/attach-event "result" :key-pressed (fn [wdgs {:keys [widget code]}]
-                                                              (if (not= code 10)
+                                                              (if (or (not= code 10) @canceled)
                                                                 wdgs
                                                                 (let [name (:name widget)
                                                                       result (-> wdgs (get name) :value parse-long)
@@ -49,8 +55,8 @@
                                                                       (assoc-in ["exercise" :value] (:representation new-exercise))
                                                                       (assoc-in ["exercise" :props :result] (:result new-exercise))
                                                                       (assoc-in ["result" :value] "")))))))]
-    (go-loop [minutes 2
-              seconds 0]
+    (go-loop [minutes 0
+              seconds 10]
       (<! (timeout 1000))
       (when (not @canceled)
         (gui/swap-widgets! (fn [wdgs]
@@ -66,9 +72,12 @@
                                  (assoc-in ["avion" :props :color :background] (if (and (= minutes 0) (< seconds 30))
                                                                                  Color/red
                                                                                  Color/green)))))
-        (when (and (> (+ minutes seconds) 0) (not @canceled))
+        (if (and (> (+ minutes seconds) 0) (not @canceled))
           (recur (if (= seconds 0) (dec minutes) minutes)
-                 (if (= seconds 0) 59 (dec seconds))))))
+                 (if (= seconds 0) 59 (dec seconds)))
+          (do
+            (reset! canceled true)
+            (gui/swap-widgets! #(ending-screen % "The end"))))))
     widgets))
 
 (defn difficulties
